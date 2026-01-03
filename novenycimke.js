@@ -5,9 +5,9 @@
         if (!container || container.dataset.processed) return;
 
         let html = container.innerHTML;
-        // Tisztítás: szögletes zárójel körüli szemét eltüntetése
         html = html.replace(/\[<span[^>]*>|<\/span>\]|\[\s+|\]/g, (m) => m.includes('[') ? '[' : ']');
 
+        // Regex a formátumhoz
         const plantRegex = /([^\[\n\r<]+)\s?\[([A-Z\s0-9\-\'\.]+)\]/gi;
 
         container.innerHTML = html.replace(plantRegex, (match, name, latin) => {
@@ -15,9 +15,13 @@
             const cleanLatin = latin.trim();
             const cleanName = name.trim();
 
+            // Vizuálisan vonzóbb gomb stílus (Box-shadow és Hover-hatás)
             return `<span class="p-chip" 
-                    style="cursor:pointer; background:#e8f5e9 !important; color:#2e7d32 !important; padding:4px 12px; border-radius:15px; border:2px solid #4CAF50; display:inline-block; margin:4px; font-family:sans-serif; font-weight:bold; font-size:14px; box-shadow: 2px 2px 5px rgba(0,0,0,0.1);"
-                    onclick="window.location.href='/search?q=${encodeURIComponent(cleanLatin)}'">
+                    title="Kattints az összes ${cleanName} megtekintéséhez!"
+                    style="cursor:pointer; background:#4CAF50 !important; color:white !important; padding:5px 15px; border-radius:20px; display:inline-block; margin:5px; font-family:sans-serif; font-weight:600; font-size:13px; box-shadow: 0 2px 4px rgba(0,0,0,0.2); transition: all 0.2s ease;"
+                    onmouseover="this.style.background='#388E3C'; this.style.transform='translateY(-1px)';"
+                    onmouseout="this.style.background='#4CAF50'; this.style.transform='translateY(0)';"
+                    onclick="window.location.href='/search/label/${encodeURIComponent(cleanLatin)}'">
                     🌱 ${cleanName}</span>`;
         });
         container.dataset.processed = "true";
