@@ -1,39 +1,27 @@
 (function() {
     'use strict';
     function transform() {
-        // Megkeressük a posztot
         const container = document.querySelector('.post-body, .entry-content, article');
         if (!container || container.dataset.processed) return;
 
-        // 1. ELŐKEZELÉS: Kivesszük a belső span-eket a zárójelek környékéről, 
-        // hogy a regex lássa a tiszta szöveget
         let html = container.innerHTML;
-        
-        // Ez a rész kiszedi a span-eket a szögletes zárójelek közül
-        const cleanRegex = /\[<span[^>]*>|<\/span>\]|\[\s+|\]/g;
-        html = html.replace(cleanRegex, (m) => m.includes('[') ? '[' : ']');
+        // Tisztítás: szögletes zárójel körüli szemét eltüntetése
+        html = html.replace(/\[<span[^>]*>|<\/span>\]|\[\s+|\]/g, (m) => m.includes('[') ? '[' : ']');
 
-        // 2. KERESÉS ÉS ÁTALAKÍTÁS
         const plantRegex = /([^\[\n\r<]+)\s?\[([A-Z\s0-9\-\'\.]+)\]/gi;
 
-        const updatedHtml = html.replace(plantRegex, (match, name, latin) => {
-            // Csak akkor alakítjuk át, ha értelmes név van előtte
+        container.innerHTML = html.replace(plantRegex, (match, name, latin) => {
             if (name.trim().length < 2) return match;
+            const cleanLatin = latin.trim();
+            const cleanName = name.trim();
 
-            return `<span class="p-chip" data-latin="${latin.trim()}" 
-                    style="cursor:pointer; background:#e8f5e9; color:#2e7d32; padding:3px 10px; border-radius:15px; border:1px solid #c8e6c9; display:inline-block; margin:2px; font-family:sans-serif; font-size:14px;"
-                    onclick="window.location.href='/search?q=data-latin%3D%22${encodeURIComponent(latin.trim())}%22'">
-                    🌱 ${name.trim()}</span>`;
+            return `<span class="p-chip" 
+                    style="cursor:pointer; background:#e8f5e9 !important; color:#2e7d32 !important; padding:4px 12px; border-radius:15px; border:2px solid #4CAF50; display:inline-block; margin:4px; font-family:sans-serif; font-weight:bold; font-size:14px; box-shadow: 2px 2px 5px rgba(0,0,0,0.1);"
+                    onclick="window.location.href='/search?q=${encodeURIComponent(cleanLatin)}'">
+                    🌱 ${cleanName}</span>`;
         });
-
-        container.innerHTML = updatedHtml;
         container.dataset.processed = "true";
     }
-
-    // Futtatás több hullámban a biztonság kedvéért
-    if (document.readyState === 'complete') transform();
-    else window.addEventListener('load', transform);
-    
-    // Tartalék, ha a sablonod késve töltené be a tartalmat
+    window.addEventListener('load', transform);
     setTimeout(transform, 1000);
 })();
