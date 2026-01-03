@@ -1,38 +1,44 @@
 /**
- * Blogger Plant Engine v2.0 - "Compose-Friendly"
- * Sima szövegből (Növény neve [Latin név]) csinál kattintható chipeket.
+ * Blogger Plant Engine v3.0 - High Performance
+ * Fix: Nem lassítja a blogot, és bárhol felismeri a [Latin] nevet.
  */
 
-document.addEventListener('DOMContentLoaded', () => {
-    // Keressük meg a bejegyzés törzsét (Blogger sablontól függően .post-body vagy .entry-content)
-    const postBody = document.querySelector('.post-body, .entry-content');
-    
-    if (!postBody) return;
+(function() {
+    'use strict';
 
-    // Ez a regex keresi a formátumot: Név [Latin név]
-    // Példa: Paradicsom [Solanum lycopersicum]
-    const plantRegex = /([A-Z-Zöüóőúéáűí\s]+)\s?\[([A-Z\s]+)\]/gi;
+    function transformPlants() {
+        // Csak a posztok törzsében keresünk, hogy gyors legyen
+        const postBody = document.querySelector('.post-body, .entry-content');
+        if (!postBody || postBody.dataset.plantsProcessed) return;
 
-    // Végigfutunk a poszt szöveges tartalmán
-    let content = postBody.innerHTML;
-    
-    // Lecseréljük a talált szövegeket HTML chipekre
-    const updatedContent = content.replace(plantRegex, (match, commonName, latinName) => {
-        return `<span class="p-chip" 
-                      data-latin="${latinName.trim()}" 
-                      title="${commonName.trim()} (${latinName.trim()})">
-                  ${commonName.trim()}
-                </span>`;
-    });
+        // Okosabb kereső: megtalálja a szöveget a [Zárójel] előtt
+        const plantRegex = /([A-Z-Zöüóőúéáűí\s\-\.\']+)\s?\[([A-Z\s0-9\-\'\.]+)\]/gi;
 
-    postBody.innerHTML = updatedContent;
-
-    // Miután legeneráltuk a chipeket, ráakasztjuk a kattintás eseményt
-    document.querySelectorAll('.p-chip').forEach(chip => {
-        chip.addEventListener('click', (e) => {
-            e.preventDefault();
-            const latin = chip.getAttribute('data-latin');
-            window.location.href = `/search?q=data-latin%3D"${encodeURIComponent(latin)}"`;
+        let content = postBody.innerHTML;
+        const updatedContent = content.replace(plantRegex, (match, before, latin) => {
+            return `<span class="p-chip" data-latin="${latin.trim()}" title="${before.trim()} (${latin.trim()})">${before.trim()}</span>`;
         });
-    });
-});
+
+        if (content !== updatedContent) {
+            postBody.innerHTML = updatedContent;
+            
+            // Eseménykezelők hozzáadása
+            postBody.querySelectorAll('.p-chip').forEach(chip => {
+                chip.onclick = function() {
+                    const search = `data-latin="${this.dataset.latin}"`;
+                    window.location.href = `/search?q=${encodeURIComponent(search)}`;
+                };
+            });
+        }
+        
+        // Megjelöljük, hogy kész, ne fusson le többször
+        postBody.dataset.plantsProcessed = "true";
+    }
+
+    // Azonnali futtatás, amikor a DOM kész, nincs várakozás
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', transformPlants);
+    } else {
+        transformPlants();
+    }
+})();
