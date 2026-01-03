@@ -1,25 +1,27 @@
-//<![CDATA[
 (function() {
     'use strict';
-    function transformPlants() {
-        // Keressünk mindenhol, ahol poszt szövege lehet
-        var containers = document.querySelectorAll('.post-body, [itemprop="articleBody"], .entry-content, article');
+    function transform() {
+        // Keressük a poszt tartalmát a Blogger sablonokban szokásos helyeken
+        var containers = document.querySelectorAll('.post-body, .entry-content, article, [itemprop="articleBody"]');
         
         containers.forEach(function(container) {
-            if (container.dataset.plantsDone) return;
-            
+            // Megállítjuk, ha már egyszer lefutott ezen a dobozon
+            if (container.dataset.processed) return;
+
             var html = container.innerHTML;
             
-            // 1. TISZTÍTÁS: Csak a szögletes zárójel belsejéből pucoljuk ki a szemetet
+            // 1. TISZTÍTÁS: Kiszórjuk a zavaró HTML kódokat a szögletes zárójel környékéről
             html = html.replace(/\[<span[^>]*>|<\/span>\]/gi, '');
-            
-            // 2. KERESÉS: Nagyon szigorú regex, ami NEM engedi be a HTML kódokat a gombba
-            // Csak olyan szöveget keresünk, ami közvetlenül a [ előtt van, de nincs benne kacsacsőr
+
+            // 2. KERESÉS: Magyar Név [Latin Név]
+            // Olyan szöveget keresünk, ami NEM tartalmaz HTML kacsacsőrt (< >) a nevekben
             var plantRegex = /([^\[\n\r<>]+)\s*\[([^\[\]<>]+)\]/gi;
 
             var newHtml = html.replace(plantRegex, function(match, common, latin) {
-                // Biztonsági szűrő: ha mégis maradt benne HTML kód (pl. > jel), azt levágjuk
                 var cleanCommon = common;
+                
+                // Ha a Blogger elválasztó kódja (separator) belecsúszna az elejébe, 
+                // csak az utolsó '>' utáni részt (a tiszta nevet) tartjuk meg.
                 if (cleanCommon.indexOf('>') !== -1) {
                     cleanCommon = cleanCommon.substring(cleanCommon.lastIndexOf('>') + 1);
                 }
@@ -27,24 +29,29 @@
                 cleanCommon = cleanCommon.trim();
                 var cleanLatin = latin.trim();
 
-                // Ha a "Növények:" szó is benne maradt, azt is levághatjuk opcionálisan, 
-                // de egyelőre hagyjuk meg, ha így szereted.
+                // Ha a név túl rövid (pl. csak egy írásjel), nem csinálunk gombot
                 if (cleanCommon.length < 2) return match;
 
+                // KERESÉS: A latin névre keresünk rá, mert ez a legbiztosabb találat
+                var searchUrl = '/search?q=' + encodeURIComponent(cleanLatin);
+
+                // STÍLUS: Sötétzöld, kerek gomb, árnyékkal és fehér betűvel
                 return '<span class="p-chip" title="Keresés: ' + cleanLatin + '" ' +
-                       'style="cursor:pointer!important;background-color:#4CAF50!important;color:white!important;padding:5px 12px!important;border-radius:20px!important;display:inline-block!important;margin:3px!important;font-family:sans-serif!important;font-weight:bold!important;font-size:13px!important;box-shadow:0 2px 4px rgba(0,0,0,0.2)!important;border:none!important;" ' +
-                       'onclick="window.location.href=\'/search?q=' + encodeURIComponent(cleanLatin) + '\'">' +
+                       'style="cursor:pointer!important;background-color:#4CAF50!important;color:white!important;' +
+                       'padding:6px 14px!important;border-radius:20px!important;display:inline-block!important;' +
+                       'margin:4px!important;font-family:sans-serif!important;font-weight:bold!important;' +
+                       'font-size:13px!important;box-shadow:0 2px 5px rgba(0,0,0,0.3)!important;border:none!important;" ' +
+                       'onclick="window.location.href=\'' + searchUrl + '\'">' +
                        '🌱 ' + cleanCommon + '</span>';
             });
 
             if (html !== newHtml) {
                 container.innerHTML = newHtml;
-                container.dataset.plantsDone = "true";
+                container.dataset.processed = "true";
             }
         });
     }
 
-    // Elindítjuk többször is, hogy biztosan elkapja a betöltést
-    setInterval(transformPlants, 1500); 
+    // Folyamatos figyelés, ha a Blogger késve töltené be a tartalmat
+    setInterval(transform, 1500);
 })();
-//]]>
