@@ -2,7 +2,9 @@
     'use strict';
     
     function transformPlantLabels() {
-        var containers = document.querySelectorAll('.post-body, .entry-content');
+        // Hozzáadtuk a #modal-body-content-et, hogy a modalban is keressen
+        var containers = document.querySelectorAll('.post-body, .entry-content, #modal-body-content');
+        
         containers.forEach(function(container) {
             if (container.dataset.plantsDone) return;
             var html = container.innerHTML;
@@ -29,17 +31,20 @@
                 var searchPath = '/search?q=' + encodeURIComponent(cleanLatin);
                 var fullUrl = window.location.origin + searchPath;
 
+                // 3D PAPÍR STÍLUS BEÉPÍTVE
                 var out = prefix + '<a href="' + searchPath + '" title="' + fullUrl + '" ' +
-                       'style="display:inline-flex!important; align-items:center!important; vertical-align:middle!important; ' +
-                       'margin:4px 4px 4px 0!important; padding:3px 8px!important; ' +
-                       'background:#F7F7F7!important; color:#0000008A!important; ' +
-                       'border-radius:12px!important; border:none!important; ' +
-                       'font-family:\'Plus Jakarta Sans\', sans-serif!important; ' +
-                       'font-size:15px!important; font-weight:400!important; ' +
-                       'text-decoration:none!important; transition: opacity 0.2s ease!important; cursor:pointer!important;">' +
-                       cleanCommon + '</a>';
+                        'style="display:inline-flex!important; align-items:center!important; vertical-align:middle!important; ' +
+                        'margin:4px 6px 4px 0!important; padding:4px 12px!important; ' +
+                        'background:#fcfcfc!important; color:#444444!important; ' + // Világos papír alap
+                        'border-radius:6px!important; border:1px solid #d1d1d1!important; ' +
+                        'box-shadow: 0 2px 4px rgba(0,0,0,0.08), inset 0 1px 0 #ffffff !important; ' + // 3D hatás (árnyék + belső fény)
+                        'font-family:\'Plus Jakarta Sans\', sans-serif!important; ' +
+                        'font-size:14px!important; font-weight:500!important; ' +
+                        'text-decoration:none!important; transition: all 0.2s ease!important; cursor:pointer!important;">' +
+                        cleanCommon + '</a>';
                 return out;
             });
+
             if (html !== newHtml) {
                 container.innerHTML = newHtml;
                 container.dataset.plantsDone = "true";
@@ -54,5 +59,7 @@
         transformPlantLabels();
     }
     window.addEventListener('load', transformPlantLabels);
-    setInterval(transformPlantLabels, 2000);
+    
+    // Rövidebb intervallum, hogy a modal nyitásakor hamarabb frissüljön
+    setInterval(transformPlantLabels, 1000);
 })();
